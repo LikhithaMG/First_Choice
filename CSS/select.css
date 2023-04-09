@@ -1,0 +1,24 @@
+body{
+    background-color: rgb(176, 230, 242);
+}
+.div1{
+    height:370px;
+    width:500px;
+    margin-top:70px;
+    
+}
+#one,#two,#three,#four{
+height:50px;
+width:400px;
+background-color: blue;
+color:white;
+font-size: 20px;
+border:0px solid black;
+border-radius:5px;
+font-weight: bold;
+}
+h1{
+    font-size:50px;
+    font-family: 'Courier New', Courier, monospace;
+    padding-top:50px;
+}
