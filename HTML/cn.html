@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="dbms.css">
+</head>
+<body>
+    <h1>PROGRAMS</h1>
+    <h2>1.Implement three nodes point to point network with duplex links between them. Set
+        the queue size, vary the bandwidth and find the number of packets dropped.</h2>
+    <textarea name="one" id="one" cols="145" rows="20">
+        set ns [new Simulator] /* Letter S is capital */
+        set nf [open lab1.nam w] /* open a nam trace file in write mode */
+        $ns namtrace-all $nf /* nf – nam file */
+        set tf [open lab1.tr w] /* tf- trace file */
+        $ns trace-all $tf
+        proc finish { } { /* provide space b/w proc and finish and all are in small case */
+        global ns nf tf
+        $ns flush-trace /* clears trace file contents */
+        close $nf
+        close $tf
+        exec nam lab1.nam &
+        exit 0
+        }
+        set n0 [$ns node] /* creates 4 nodes */
+        set n1 [$ns node]
+        set n2 [$ns node]
+        set n3 [$ns node]
+        $ns duplex-link $n0 $n2 200Mb 10ms DropTail /*Letter M is capital Mb*/
+        $ns duplex-link $n1 $n2 100Mb 5ms DropTail /*D and T are capital*/
+        $ns duplex-link $n2 $n3 1Mb 1000ms DropTail
+        $ns queue-limit $n0 $n2 10
+        $ns queue-limit $n1 $n2 10
+        set udp0 [new Agent/UDP] /* Letters A,U,D and P are capital */
+        $ns attach-agent $n0 $udp0
+        set cbr0 [new Application/Traffic/CBR] /* A,T,C,B and R are capital*/
+        $cbr0 set packetSize_ 500 /*S is capital, space after underscore*/
+        $cbr0 set interval_ 0.005
+        $cbr0 attach-agent $udp0
+        set udp1 [new Agent/UDP]
+        $ns attach-agent $n1 $udp1
+        set cbr1 [new Application/Traffic/CBR]
+        $cbr1 attach-agent $udp1
+        set udp2 [new Agent/UDP]
+        $ns attach-agent $n2 $udp2
+        set cbr2 [new Application/Traffic/CBR]
+        $cbr2 attach-agent $udp2
+        set null0 [new Agent/Null] /* A and N are capital */
+        $ns attach-agent $n3 $null0
+        $ns connect $udp0 $null0
+        $ns connect $udp1 $null0
+        $ns at 0.1 "$cbr0 start"
+        $ns at 0.2 "$cbr1 start"
+        $ns at 1.0 "finish"
+        $ns run
+        AWK file (Open a new editor using “vi command” and write awk file and save with
+        “.awk” extension)
+        /*immediately after BEGIN should open braces „{„
+        BEGIN {
+        c=0;
+        }
+        {
+        If ($1= ="d")
+        {
+        c++;
+        printf("%s\t%s\n",$5,$11);
+        }
+        }
+        /*immediately after END should open braces „{„
+        END{
+        printf("The number of packets dropped =%d\n",c);
+        }
+</textarea>
+<h2>2.Implement transmission of ping messages/trace route over a network topology
+    consisting of 6 nodes and find the number of packets dropped due to congestion.</h2>
+    <textarea name="two" id="two" cols="145" rows="20">
+        set ns [ new Simulator ]
+        set nf [ open lab2.nam w ]
+        $ns namtrace-all $nf
+        set tf [ open lab2.tr w ]
+        $ns trace-all $tf
+        set n0 [$ns node]
+        set n1 [$ns node]
+        set n2 [$ns node]
+        set n3 [$ns node]
+        set n4 [$ns node]
+        set n5 [$ns node]
+        $n4 shape box
+        $ns duplex-link $n0 $n4 1005Mb 1ms DropTail
+        $ns duplex-link $n1 $n4 50Mb 1ms DropTail
+        $ns duplex-link $n2 $n4 2000Mb 1ms DropTail
+        $ns duplex-link $n3 $n4 200Mb 1ms DropTail
+        $ns duplex-link $n4 $n5 1Mb 1ms DropTail
+        set p1 [new Agent/Ping]
+        $ns attach-agent $n0 $p1
+        $p1 set packetSize_ 50000
+        $p1 set interval_ 0.0001
+        set p2 [new Agent/Ping]
+        $ns attach-agent $n1 $p2
+        set p3 [new Agent/Ping]
+        $ns attach-agent $n2 $p3
+        $p3 set packetSize_ 30000
+        $p3 set interval_ 0.00001
+        set p4 [new Agent/Ping]
+        $ns attach-agent $n3 $p4
+        set p5 [new Agent/Ping]
+        $ns attach-agent $n5 $p5
+        $ns queue-limit $n0 $n4 5
+        $ns queue-limit $n2 $n4 3
+        $ns queue-limit $n4 $n5 2
+        Agent/Ping instproc recv {from rtt} {
+        $self instvar node_
+        puts "node [$node_ id] received answer from $from with round trip time $rtt msec"
+        }
+        # please provide space between $node_ and id. No space between $ and from. No
+        #space between and $ and rtt */
+        $ns connect $p1 $p5
+        $ns connect $p3 $p4
+        proc finish { } {
+        global ns nf tf
+        $ns flush-trace
+        close $nf
+        close $tf
+        exec nam lab2.nam &
+        exit 0
+        }
+        $ns at 0.1 "$p1 send"
+        $ns at 0.2 "$p1 send"
+        $ns at 0.3 "$p1 send"
+        $ns at 0.4 "$p1 send"
+        $ns at 0.5 "$p1 send"
+        $ns at 0.6 "$p1 send"
+        $ns at 0.7 "$p1 send"
+        $ns at 0.8 "$p1 send"
+        $ns at 0.9 "$p1 send"
+        $ns at 1.0 "$p1 send"
+        $ns at 1.1 "$p1 send"
+        $ns at 1.2 "$p1 send"
+        $ns at 1.3 "$p1 send"
+        $ns at 1.4 "$p1 send"
+        $ns at 1.5 "$p1 send"
+        $ns at 1.6 "$p1 send"
+        $ns at 1.7 "$p1 send"
+        $ns at 1.8 "$p1 send"
+        $ns at 1.9 "$p1 send"
+        $ns at 2.0 "$p1 send"
+        $ns at 2.1 "$p1 send"
+        $ns at 2.2 "$p1 send"
+        $ns at 2.3 "$p1 send"
+        $ns at 2.4 "$p1 send"
+        $ns at 2.5 "$p1 send"
+        $ns at 2.6 "$p1 send"
+        $ns at 2.7 "$p1 send"
+        $ns at 2.8 "$p1 send"
+        $ns at 2.9 "$p1 send"
+        $ns at 0.1 "$p3 send"
+        $ns at 0.2 "$p3 send"
+        $ns at 0.3 "$p3 send"
+        $ns at 0.4 "$p3 send"
+        $ns at 0.5 "$p3 send"
+        $ns at 0.6 "$p3 send"
+        $ns at 0.7 "$p3 send"
+        $ns at 0.8 "$p3 send"
+        $ns at 0.9 "$p3 send"
+        $ns at 1.0 "$p3 send"
+        $ns at 1.1 "$p3 send"
+        $ns at 1.2 "$p3 send"
+        $ns at 1.3 "$p3 send"
+        $ns at 1.4 "$p3 send"
+        $ns at 1.5 "$p3 send"
+        $ns at 1.6 "$p3 send"
+        $ns at 1.7 "$p3 send"
+        $ns at 1.8 "$p3 send"
+        $ns at 1.9 "$p3 send"
+        $ns at 2.0 "$p3 send"
+        $ns at 2.1 "$p3 send"
+        $ns at 2.2 "$p3 send"
+        $ns at 2.3 "$p3 send"
+        $ns at 2.4 "$p3 send"
+        $ns at 2.5 "$p3 send"
+        $ns at 2.6 "$p3 send"
+        $ns at 2.7 "$p3 send"
+        $ns at 2.8 "$p3 send"
+        $ns at 2.9 "$p3 send"
+        $ns at 3.0 "finish"
+        $ns run
+        AWK file (Open a new editor using “vi command” and write awk file and save
+        with “.awk” extension)
+        BEGIN{
+        drop=0;
+        }
+        {
+        if($1= ="d" )
+        {
+        drop++;
+        }
+        }
+        END{
+        printf("Total number of %s packets dropped due to congestion =%d\n",$5,drop);
+        }
+</textarea>
+<h2>3.Implement an Ethernet LAN using n nodes and set multiple traffic nodes and plot
+    congestion window for different source / destination.</h2>
+<textarea name="three" id="three" cols="145" rows="20">
+set ns [new Simulator]
+set tf [open lab3.tr w]
+$ns trace-all $tf
+set nf [open lab3.nam w]
+$ns namtrace-all $nf
+set n0 [$ns node]
+$n0 color "magenta"
+$n0 label "src1"
+set n1 [$ns node]
+set n2 [$ns node]
+$n2 color "magenta"
+$n2 label "src2"
+set n3 [$ns node]
+$n3 color "blue"
+$n3 label "dest2"
+set n4 [$ns node]
+set n5 [$ns node]
+$n5 color "blue"
+$n5 label "dest1"
+$ns make-lan "$n0 $n1 $n2 $n3 $n4" 100Mb 100ms LL Queue/DropTail Mac/802_3
+/* should come in single line */
+$ns duplex-link $n4 $n5 1Mb 1ms DropTail
+set tcp0 [new Agent/TCP]
+$ns attach-agent $n0 $tcp0
+set ftp0 [new Application/FTP]
+$ftp0 attach-agent $tcp0
+$ftp0 set packetSize_ 500
+$ftp0 set interval_ 0.0001
+set sink5 [new Agent/TCPSink]
+$ns attach-agent $n5 $sink5
+$ns connect $tcp0 $sink5
+set tcp2 [new Agent/TCP]
+$ns attach-agent $n2 $tcp2
+set ftp2 [new Application/FTP]
+$ftp2 attach-agent $tcp2
+$ftp2 set packetSize_ 600
+$ftp2 set interval_ 0.001
+set sink3 [new Agent/TCPSink]
+$ns attach-agent $n3 $sink3
+$ns connect $tcp2 $sink3
+set file1 [open file1.tr w]
+$tcp0 attach $file1
+set file2 [open file2.tr w]
+$tcp2 attach $file2
+$tcp0 trace cwnd_ /* must put underscore ( _ ) after cwnd and no space between
+them*/
+$tcp2 trace cwnd_
+proc finish { } {
+global ns nf tf
+$ns flush-trace
+close $tf
+close $nf
+exec nam lab3.nam &
+exit 0
+}
+$ns at 0.1 "$ftp0 start"
+$ns at 5 "$ftp0 stop"
+$ns at 7 "$ftp0 start"
+$ns at 0.2 "$ftp2 start"
+$ns at 8 "$ftp2 stop"
+$ns at 14 "$ftp0 stop"
+$ns at 10 "$ftp2 start"
+$ns at 15 "$ftp2 stop"
+$ns at 16 "finish"
+$ns run
+AWK file (Open a new editor using “vi command” and write awk file and save with
+“.awk” extension)
+cwnd:- means congestion window
+BEGIN {
+}
+{
+if($6= ="cwnd_") /* don‘t leave space after writing cwnd_ */
+printf("%f\t%f\t\n",$1,$7); /* you must put \n in printf */
+}
+END {
+}
+</textarea>
+</body>
+</html>
