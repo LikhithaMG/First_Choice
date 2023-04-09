@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="dbms.css">
+</head>
+<body>
+    <h1>PROGRAMS</h1>
+    <h2>1.To design a Library database </h2>
+    <textarea name="one" id="one" cols="145" rows="20">
+BOOK (BOOK_ID, TITLE, PUBLISHER_NAME, PUB_YEAR)
+BOOK_AUTHORS (BOOK_ID, AUTHOR_NAME)
+PUBLISHER (NAME, ADDRESS, PHONE)
+BOOK_COPIES (BOOK_ID, BRANCH_ID, NO_OF_COPIES)
+BOOK_LENDING (BOOK_ID, BRANCH_ID, CARD_NO, DATE_OUT, DUE_DATE)
+LIBRARY_BRANCH (BRANCH_ID, BRANCH_NAME, ADDRESS)
+CARD (CARD_NO)
+
+        Write SQL queries to
+        a)	Retrieve details of all books in the library – id, title, name of publisher, authors, number of copies in each branch.
+        b)	Get the particulars of borrowers who have borrowed more than 3 books, but from Jan 2017 to Jun 2017.
+        c)	Partition the BOOK table based on year of publication. Demonstrate its working with a simple query.
+        d)	Create a view of all books and its number of copies that are currently available in the library.
+        e)	Delete a book in the BOOK table. Update the contents of other tables to reflect this data manipulation operation.
+Solution:
+CREATE TABLE PUBLISHER (NAME VARCHAR2 (20) PRIMARY KEY, PHONE INTEGER, ADDRESS VARCHAR2 (20));
+
+CREATE TABLE BOOK (BOOK_ID INTEGER PRIMARY KEY, TITLE VARCHAR2 (20), PUB_YEAR VARCHAR2 (20), PUBLISHER_NAME REFERENCES PUBLISHER (NAME) ON DELETE CASCADE);
+
+CREATE TABLE BOOK_AUTHORS (AUTHOR_NAME VARCHAR2 (20),
+BOOK_ID REFERENCES BOOK (BOOK_ID) ON DELETE  CASCADE, PRIMARY KEY (BOOK_ID, AUTHOR_NAME));
+
+CREATE TABLE LIBRARY_BRANCH (BRANCH_ID INTEGER PRIMARY KEY, BRANCH_NAME VARCHAR2 (50), ADDRESS VARCHAR2 (50));
+
+CREATE TABLE BOOK_COPIES (NO_OF_COPIES INTEGER,
+BOOK_ID REFERENCES BOOK (BOOK_ID) ON DELETE CASCADE,
+BRANCH_ID	REFERENCES	LIBRARY_BRANCH	(BRANCH_ID)	ON	DELETE CASCADE, PRIMARY KEY (BOOK_ID, BRANCH_ID));
+
+CREATE TABLE CARD (CARD_NO INTEGER PRIMARY KEY);
+
+
+CREATE TABLE  BOOK_LENDING  (DATE_OUT DATE, DUE_DATE DATE,BOOK_ID REFERENCES BOOK (BOOK_ID) ON DELETE CASCADE, BRANCH_IDREFERENCES	LIBRARY_BRANCH	(BRANCH_ID) ON DELETE CASCADE, CARD_NO REFERENCES CARD (CARD_NO) ON DELETE CASCADE, PRIMARY KEY (BOOK_ID, BRANCH_ID, CARD_NO));
+
+a)SELECT  B.BOOK_ID, B.TITLE, B.PUBLISHER_NAME, A.AUTHOR_NAME, C.NO_OF_COPIES, L.BRANCH_ID FROM BOOK B, BOOK_AUTHORS A, BOOK_COPIES C, LIBRARY_BRANCH L WHERE B.BOOK_ID=A.BOOK_ID AND  B.BOOK_ID=C.BOOK_ID AND L.BRANCH_ID=C.BRANCH_ID;
+
+b)SELECT CARD_NO FROM BOOK_LENDING
+WHERE DATE_OUT BETWEEN ‘01-JAN-2017’ AND ‘01-JUL-2017’  GROUP BY CARD_NO
+HAVING COUNT (*)>3;
+
+c)DELETE FROM BOOK WHERE BOOK_ID=3;
+
+d)CREATE VIEW V_PUBLICATION AS SELECT PUB_YEAR
+FROM BOOK;
+
+e)CREATE VIEW V_BOOKS AS
+SELECT B.BOOK_ID, B.TITLE, C.NO_OF_COPIES
+FROM BOOK B, BOOK_COPIES C, LIBRARY_BRANCH L WHERE B.BOOK_ID=C.BOOK_ID
+AND C.BRANCH_ID=L.BRANCH_ID;
+</textarea>
+<h2>2.To design a Order database </h2>
+    <textarea name="two" id="two" cols="145" rows="20">
+SALESMAN (SALESMAN_ID, NAME, CITY, COMMISSION)
+CUSTOMER (CUSTOMER_ID, CUST_NAME, CITY, GRADE, SALESMAN_ID)
+ORDERS (ORD_NO, PURCHASE_AMT, ORD_DATE, CUSTOMER_ID, SALESMAN_ID)
+
+Write SQL queries to
+a) Count the customers with grades above Bangalore’s average.
+b) Find the name and numbers of all salesmen who had more than one customer.
+c) List all the salesman and indicate those who have and do not have customers in their cities (Use
+UNION operation.)
+d) Create a view that finds the salesman who has the customer with the highest order of a day.
+e) Demonstrate the DELETE operation by removing salesman with id 1000. All his orders must also be
+deleted.
+create table Salesman(
+	Salesman_ID int primary key,
+	Name varchar(20),
+	City varchar(20),
+	Commission varchar(20));
+
+insert into Salesman values(&Salesman_ID,'&Name','&City','&Commission');
+Create table Customer(Customer_ID int primary key,
+	Cust_Name varchar(20),
+	City varchar(20), 
+	Grade int, 
+	Salesman_ID references Salesman(Salesman_ID) on delete set null);
+
+insert into Customer values(&Customer_ID,'&Cust_Name','&City',&Grade,&Salesman_ID);
+create table Orders(Ord_No int primary key,  
+	Purchase_Amt Number,
+	Ord_Date date, 
+	Customer_ID references Customer(Customer_ID) on delete set null, 
+	Salesman_ID references Salesman(Salesman_ID) on delete set null);
+insert into Orders values(&Ord_No,&Purchase,'&Ord_Date',&Customer_ID,&Salesman_ID);
+a)select count(*) from Customer where Grade > (select avg(Grade) from Customer where city = 'Bangalore');
+
+b)select S.Salesman_ID, Name from Salesman S having
+(select count(*) from Customer where Salesman_ID=S.Salesman_ID) > 1 group by Name,
+S.Salesman_ID;
+
+c) select Salesman.Salesman_ID,Name,Cust_Name from Salesman ,Customer 
+where Salesman.City=Customer.City 
+Union
+select Salesman.Salesman_ID,Name,'No-Match' 
+from Salesman where not City=any (select City from Customer);
+   
+d)Create a view that finds the salesman who has the customer with the highest order of a day.
+create view salesman_order as select b.Ord_Date, a.Salesman_ID,Name 
+from Salesman a, Orders B where A.Salesman_ID=b.Salesman_ID and b.Purchase_Amt=
+(select max(Purchase_Amt) from Orders C where C.Ord_Date=b.Ord_Date);
+
+e)e.	Demonstrate the DELETE operation by removing salesman with id 1000. All his orders must also be
+deleted.
+delete from Salesman where Salesman_ID=1000;
+
+</textarea>
+<h2>3.To design a Airline database </h2>
+<textarea name="three" id="three" cols="145" rows="20">
+    FLIGHTS (FLNO: INTEGER, SOURCE: STRING, DESTINATION: STRING, DISTANCE: INTEGER,
+    DEPARTS:TIME, ARRIVES: TIME, PRICE: INTEGER)
+    AIRCRAFT (AID: INTEGER, ANAME: STRING, CRUISINGRANGE: INTEGER)
+    CERTIFIED (EID: INTEGER, AID: INTEGER)
+    EMPLOYEES (EID: INTEGER, ENAME: STRING, SALARY: INTEGER)
+    Note that the Employees relation describes pilots and other kinds of employees as well; every pilot is certified
+    for some aircraft, and only pilots are certified to fly.
+    Write SQL queries to
+    a) Find the names of aircraft such that all pilots certified to operate them earn more than $80,000.
+    b) For each pilot who is certified for more than three aircraft, find the eid and the maximum cruisingrange
+    of the aircraft for which she or he is certified.
+    c) For all aircraft with cruisingrange over 1000 miles, find the name of the aircraft and the average salary
+    of all pilots certified for this aircraft.
+    d) Print the enames of pilots who can operate planes with cruising range greater than 3000 miles but are
+    not certified on any Boeing aircraft.
+    e) Print the name and salary of every nonpilot whose salary is more than the average salary for pilots.
+    
+    create table Flights(Flno int primary key, Source varchar(20), Destination varchar(20),Distance 
+    int,DepartTime varchar(10),ArrivalTime varchar(10), Price int);
+    insert into Flights values(&Flno, '&Source', '&Destination', &Distance, '&DepartTime', '&ArrivalTime', &Price); 
+    
+    create table AirCraft(Aid int primary key, Aname varchar(20), CrusingRange int);
+    insert into AirCraft values(&Aid,'&AName',&CruisingRange);
+    
+    create table Employees(Eid int primary key, Ename varchar(20), Salary int);
+    insert into Employees values(&Eid,'&Ename',&Salary);
+    
+    create table Certified(Eid references Employees(Eid), Aid references AirCraft(Aid));
+    insert into Certified values(&Eid,&Aid);
+
+    a)select Aname from AirCraft A, Employees E, Certified C where A.Aid = C.Aid and E.Eid = C.Eid and E.Salary > 80000;
+
+    b)select E.Eid, Max(CrusingRange) from Employees E, Certified C, AirCraft A where E.Eid=C.Eid and A.Aid = C.Aid group by E.Eid having count(*) > 3;
+
+    c)select A.Aname ,avg(Salary) from Employees E, Certified C , Aircraft A where C.Eid = E.Eid and A.Aid = C.Aid and A.CrusingRange>1000 group by A.Aname;
+
+    d)select distinct e.ename
+    from Aircraft a join Certified c
+    on a.aid=c.aid
+    join Employees e 
+    on c.eid=e.eid
+    where a.cruisingrange>3000
+    and c.aid not IN
+    (select distinct aid from Aircarft where aname = 'Boeing' );
+    
+    e)Select  Ename, Salary from Employees where salary > (select avg(salary) from Employees) and Eid not in ( select Eid from Certified);
+</textarea>
+<h1>VIVA QUESTIONS</h1>
+<p>1.What is SQL?<br>
+    Structured Query Language<br><br>
+    2.	What is database?<br>
+    A database is a logically coherent collection of data with some inherent meaning, representing some aspect of real world and which is designed, built and populated with data for a specific purpose.
+    <br><br>3.	What is DBMS?
+    <br>It is a collection of programs that enables user to create and maintain a database. In other words it is general-purpose software that provides the users with the processes of defining, constructing and manipulating the database for various applications.
+    <br><br>4.	What is a Database system?
+    <br>The database and DBMS software together is called as Database system.
+    <br><br>5.	Advantages of DBMS?
+    <br>Redundancy is controlled.
+    <br>Unauthorized access is restricted.
+    <br>Providing multiple user interfaces.
+    <br>Enforcing integrity constraints.
+    <br>Providing backup and recovery.
+    <br><br>6.	Disadvantage in File Processing System?
+    <br>Data redundancy & inconsistency.
+    <br>Difficult in accessing data.
+    <br>Data isolation.
+    <br>Data integrity.
+    <br>Concurrent access is not possible.
+    <br>Security Problems.
+    <br><br>7.	Describe the three levels of data abstraction?
+    <br>There are three levels of abstraction:
+    <br>Physical level: The lowest level of abstraction describes how data are stored.
+    <br>Logical level: The next higher level of abstraction, describes what data are stored in database and what relationship among those data.
+    <br>View level:The highest level of abstraction describes only part of entire database.
+    <br><br>8.	Define the "integrity rules"
+    <br>There are two Integrity rules.
+    <br>Entity  Integrity:States  that ―Primary  key cannot have  NULL value‖
+    <br>Referential  Integrity:States  that  ―Foreign  Key can be  either  a  NULL  value  or should be Primary Key value of other relation.
+    <br><br>9.	What is extension and intension?
+    <br>Extension - It is the number of tuples present in a table at any instance. This is time dependent.
+    <br>Intension -It is a constant value that gives the name, structure of table and the constraints laid on it.
+    <br><br>10.	What is Data Independence?
+    <br>Data independence means that ―the application is independent of the storage structure and access strategy of data‖. In other words, The ability to modify the schema definition in one level should not affect the schema definition in the next higher level.
+    <br>Two types of Data Independence:
+    <br>Physical Data Independence: Modification in physical level should not affect the logical level.
+    <br>Logical Data Independence: Modification in logical level should affect the view level.</p>
+</body>
+</html>
